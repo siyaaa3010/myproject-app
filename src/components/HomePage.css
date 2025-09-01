@@ -1,0 +1,138 @@
+/* reset */
+* { box-sizing: border-box; }
+body, html, #root { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+
+/* ---------------- HomePage ---------------- */
+.home-root {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(-45deg,#ff9a9e,#fad0c4,#fbc2eb,#ffd1ff);
+  background-size: 400% 400%;
+  animation: gradientBG 12s ease infinite;
+}
+
+.home-content { 
+  text-align: center; 
+  color: #130f0f; 
+  padding: 24px; 
+  z-index: 2; 
+  position: relative;
+  animation: fadeIn 2s ease forwards;
+}
+
+.home-title { 
+  font-size: 3rem; 
+  margin-bottom: 12px; 
+  text-shadow: 0 6px 22px rgba(0,0,0,0.3); 
+  animation: bounce 2s ease infinite;
+}
+
+.home-sub { 
+  margin: 0 0 20px; 
+  font-size: 1.2rem; 
+  opacity: .95; 
+  animation: shimmer 2.5s linear infinite;
+}
+
+.enter-btn {
+  padding: 14px 36px; 
+  border-radius: 50px; 
+  border: none; 
+  font-size: 18px;
+  background: #fff; 
+  color: #ff4e50; 
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,.25);
+  transition: all .3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.enter-btn:hover {
+  transform: scale(1.15) rotate(-3deg);
+  background: #ff4e50; 
+  color: white;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+}
+
+/* ---------------- Floating Hearts ---------------- */
+.home-heart {
+  position: absolute;
+  pointer-events: none;
+  opacity: .7;
+  animation-name: floatHeart;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+@keyframes floatHeart {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+  50% { transform: translateY(-50px) rotate(15deg); opacity: 1; }
+  100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+}
+
+/* ---------------- Cake & Candle ---------------- */
+.candle-flame {
+  animation: flicker 0.8s infinite alternate;
+  box-shadow: 0 0 20px 6px rgba(255,165,0,0.8);
+  border-radius: 50%;
+}
+@keyframes flicker {
+  0% { transform: scale(1) translateY(0); opacity: 1; }
+  50% { transform: scale(1.3) translateY(-2px); opacity: 0.8; }
+  100% { transform: scale(0.9) translateY(1px); opacity: 1; }
+}
+.cake-layer {
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+.cake-layer:hover {
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+/* ---------------- Confetti ---------------- */
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  opacity: 0.8;
+  top: -10px;
+  animation: fall 4s linear infinite;
+}
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ---------------- Animations ---------------- */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0% { text-shadow: 0 0 5px #fff; }
+  50% { text-shadow: 0 0 20px #ff69b4; }
+  100% { text-shadow: 0 0 5px #fff; }
+}
+@keyframes gradientBG {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 768px) {
+  .home-title { font-size: 2.4rem; }
+  .home-sub { font-size: 1rem; }
+  .enter-btn { padding: 12px 30px; font-size: 16px; }
+}
+@media (max-width: 480px) {
+  .home-title { font-size: 1.8rem; }
+  .home-sub { font-size: 0.9rem; }
+  .enter-btn { padding: 10px 24px; font-size: 15px; }
+}
