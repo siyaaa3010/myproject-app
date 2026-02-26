@@ -44,21 +44,46 @@ const PHOTOS = [
 
 export default function Memories({ onBack, onNext }) {
   const [index, setIndex] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('memoriesFavorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [viewedPhotos, setViewedPhotos] = useState(() => {
+    const saved = localStorage.getItem('viewedPhotos');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationShown, setCelebrationShown] = useState(() => {
+    const saved = localStorage.getItem('celebrationShown');
+    return saved === 'true';
+  });
+  
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio(process.env.PUBLIC_URL + "/music/love.mp3"));
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.55);
 
-  // Slideshow timer
   useEffect(() => {
-    timerRef.current = setInterval(
-      () => setIndex((i) => (i + 1) % PHOTOS.length),
-      2000
-    );
-    return () => clearInterval(timerRef.current);
-  }, []);
+    if (viewedPhotos.length === PHOTOS.length && !showCelebration && !celebrationShown) {
+      setShowCelebration(true);
+      setCelebrationShown(true);
+      localStorage.setItem('celebrationShown', 'true');
+      setTimeout(() => setShowCelebration(false), 5000);
+    }
+  }, [viewedPhotos, showCelebration, celebrationShown]);
 
-  // STOP music on unmount
+  useEffect(() => {
+    if (autoPlay) {
+      timerRef.current = setInterval(
+        () => setIndex((i) => (i + 1) % PHOTOS.length),
+        3000
+      );
+    }
+    return () => clearInterval(timerRef.current);
+  }, [autoPlay]);
+
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -68,17 +93,43 @@ export default function Memories({ onBack, onNext }) {
     };
   }, []);
 
-  const pauseSlideshow = () => clearInterval(timerRef.current);
-  const resumeSlideshow = () => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(
-      () => setIndex((i) => (i + 1) % PHOTOS.length),
-      5000
-    );
+  const toggleFavorite = (i) => {
+    const newFavs = favorites.includes(i) 
+      ? favorites.filter(f => f !== i)
+      : [...favorites, i];
+    setFavorites(newFavs);
+    localStorage.setItem('memoriesFavorites', JSON.stringify(newFavs));
   };
 
-  const next = () => setIndex((i) => (i + 1) % PHOTOS.length);
-  const prev = () => setIndex((i) => (i - 1 + PHOTOS.length) % PHOTOS.length);
+  const markViewed = (i) => {
+    if (!viewedPhotos.includes(i)) {
+      const newViewed = [...viewedPhotos, i];
+      setViewedPhotos(newViewed);
+      localStorage.setItem('viewedPhotos', JSON.stringify(newViewed));
+    }
+  };
+
+  const openFullscreen = (i) => {
+    setIndex(i);
+    setFullscreen(true);
+    markViewed(i);
+    if (!playing) {
+      audioRef.current.volume = volume;
+      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  };
+
+  const next = () => {
+    const newIdx = (index + 1) % PHOTOS.length;
+    setIndex(newIdx);
+    markViewed(newIdx);
+  };
+  
+  const prev = () => {
+    const newIdx = (index - 1 + PHOTOS.length) % PHOTOS.length;
+    setIndex(newIdx);
+    markViewed(newIdx);
+  };
 
   const hearts = useMemo(
     () =>
@@ -87,10 +138,7 @@ export default function Memories({ onBack, onNext }) {
         (_, id) => ({
           id,
           left: Math.random() * 100,
-          size:
-            window.innerWidth < 480
-              ? 10 + Math.random() * 10
-              : 14 + Math.random() * 28,
+          size: window.innerWidth < 480 ? 10 + Math.random() * 10 : 14 + Math.random() * 28,
           dur: 6 + Math.random() * 6,
           delay: Math.random() * 6,
           hue: 330 + Math.random() * 20,
@@ -101,7 +149,16 @@ export default function Memories({ onBack, onNext }) {
 
   return (
     <div className="memories-root">
-      {/* Floating Hearts */}
+      {showCelebration && (
+        <div className="mem-celebration-overlay">
+          <div className="mem-celebration-card">
+            <h2>🎉 All Memories Viewed! 🎉</h2>
+            <p>You've seen every precious moment!</p>
+            <p className="mem-celebration-quote">"Together, we've created a lifetime of memories" 💕</p>
+          </div>
+        </div>
+      )}
+
       {hearts.map((h) => (
         <span
           key={h.id}
@@ -118,25 +175,24 @@ export default function Memories({ onBack, onNext }) {
         </span>
       ))}
 
-      {/* Top bar with back + audio player */}
       <div className="mem-topbar">
-        <button className="back-btn" onClick={onBack}>
-          ← Home
-        </button>
+        <button className="back-btn" onClick={onBack}>← Home</button>
+        <div className="mem-stats">
+          <span>📸 {viewedPhotos.length}/{PHOTOS.length} viewed</span>
+          <span>❤️ {favorites.length} favorites</span>
+        </div>
+        <button className="next-btn-top" onClick={onNext}>Next ➡</button>
         <div className="player">
-          <button
-            className="play-btn"
-            onClick={() => {
-              if (!audioRef.current) return;
-              if (playing) {
-                audioRef.current.pause();
-                setPlaying(false);
-              } else {
-                audioRef.current.volume = volume;
-                audioRef.current.play().then(() => setPlaying(true));
-              }
-            }}
-          >
+          <button className="play-btn" onClick={() => {
+            if (!audioRef.current) return;
+            if (playing) {
+              audioRef.current.pause();
+              setPlaying(false);
+            } else {
+              audioRef.current.volume = volume;
+              audioRef.current.play().then(() => setPlaying(true));
+            }
+          }}>
             {playing ? "❚❚" : "▶"}
           </button>
           <input
@@ -154,12 +210,7 @@ export default function Memories({ onBack, onNext }) {
         </div>
       </div>
 
-      {/* Slideshow */}
-      <div
-        className="slideshow-wrapper"
-        onMouseEnter={pauseSlideshow}
-        onMouseLeave={resumeSlideshow}
-      >
+      <div className="slideshow-wrapper">
         <div className="sparkles">
           {Array.from({ length: 30 }).map((_, i) => (
             <span key={i} className="sparkle"></span>
@@ -170,54 +221,61 @@ export default function Memories({ onBack, onNext }) {
             src={PHOTOS[index].url}
             alt={PHOTOS[index].caption}
             className="slide-img-full animated-slide"
+            onClick={() => openFullscreen(index)}
           />
           <div className="slide-caption animated-caption">
             {PHOTOS[index].caption}
           </div>
-          <button className="nav-left" onClick={prev}>
-            ‹
+          <button className="nav-left" onClick={prev}>‹</button>
+          <button className="nav-right" onClick={next}>›</button>
+          <button 
+            className={`slide-fav-btn ${favorites.includes(index) ? 'active' : ''}`}
+            onClick={() => toggleFavorite(index)}
+          >
+            {favorites.includes(index) ? '❤️' : '🤍'}
           </button>
-          <button className="nav-right" onClick={next}>
-            ›
+          <button 
+            className="autoplay-btn"
+            onClick={() => setAutoPlay(!autoPlay)}
+            title={autoPlay ? "Pause slideshow" : "Play slideshow"}
+          >
+            {autoPlay ? '⏸' : '▶'}
           </button>
         </div>
       </div>
 
-      {/* Photo Cards */}
       <div className="card-grid">
         {PHOTOS.map((p, i) => (
           <div
             key={p.url}
-            className={`card ${i === index ? "active" : ""}`}
-            onClick={() => {
-              setIndex(i);
-              if (!playing) {
-                audioRef.current.volume = volume;
-                audioRef.current
-                  .play()
-                  .then(() => setPlaying(true))
-                  .catch((err) => console.log(err));
-              }
-            }}
+            className={`card ${i === index ? "active" : ""} ${viewedPhotos.includes(i) ? "viewed" : ""}`}
+            onClick={() => openFullscreen(i)}
           >
             <div className="card-img-wrap">
-              <img
-                src={p.url}
-                alt={p.caption}
-                className="card-img card-hover-glow"
-              />
+              <img src={p.url} alt={p.caption} className="card-img card-hover-glow" />
+              {favorites.includes(i) && <span className="card-fav-badge">❤️</span>}
+              {viewedPhotos.includes(i) && <span className="card-viewed-badge">✓</span>}
             </div>
             <div className="card-caption">{p.caption}</div>
           </div>
         ))}
       </div>
 
-      {/* Navigation */}
-      <div className="mem-controls">
-        <button className="next-btn" onClick={onNext}>
-          Next ➡
-        </button>
-      </div>
+      {fullscreen && (
+        <div className="mem-fullscreen" onClick={() => setFullscreen(false)}>
+          <div className="mem-fs-controls" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setFullscreen(false)}>✕</button>
+            <button onClick={() => toggleFavorite(index)}>
+              {favorites.includes(index) ? '❤️' : '🤍'}
+            </button>
+            <span>{index + 1} / {PHOTOS.length}</span>
+          </div>
+          <button className="mem-fs-nav prev" onClick={(e) => { e.stopPropagation(); prev(); }}>‹</button>
+          <button className="mem-fs-nav next" onClick={(e) => { e.stopPropagation(); next(); }}>›</button>
+          <img src={PHOTOS[index].url} alt="" className="mem-fs-img" onClick={(e) => e.stopPropagation()} />
+          <p className="mem-fs-caption">{PHOTOS[index].caption}</p>
+        </div>
+      )}
     </div>
   );
 }

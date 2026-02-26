@@ -1,11 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Memories from "./Memories";
 import GiftPage from "./GiftGallery";
 import StarryFlipbook from "./StarryFlipbook";
+import SurprisePage from "./SurprisePage";
 import "./HomePage.css";
 
 export default function HomePage() {
-  const [showPage, setShowPage] = useState("home"); // home | memories | gift | flipbook
+  const [showPage, setShowPage] = useState("home");
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [allCandlesBlown, setAllCandlesBlown] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcome(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('viewedPhotos');
+      localStorage.removeItem('memoriesFavorites');
+      localStorage.removeItem('celebrationShown');
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   if (showPage === "memories")
     return (
@@ -24,9 +43,11 @@ export default function HomePage() {
     );
 
   if (showPage === "flipbook")
-    return <StarryFlipbook onBack={() => setShowPage("gift")} />;
+    return <StarryFlipbook onBack={() => setShowPage("gift")} onNext={() => setShowPage("surprise")} />;
 
-  // Confetti
+  if (showPage === "surprise")
+    return <SurprisePage onBack={() => setShowPage("flipbook")} />;
+
   const confetti = [...Array(30)].map((_, i) => ({
     left: Math.random() * 100 + "vw",
     duration: 3 + Math.random() * 2 + "s",
@@ -36,7 +57,13 @@ export default function HomePage() {
 
   return (
     <div className="home-root">
-      {/* Floating hearts */}
+      {showWelcome && (
+        <div className="welcome-splash">
+          <h1 className="splash-text">Happy Birthday Chloo! 🎉</h1>
+          <p className="splash-sub">Get ready for something special...</p>
+        </div>
+      )}
+
       {[...Array(25)].map((_, i) => (
         <span
           key={i}
@@ -52,7 +79,6 @@ export default function HomePage() {
         </span>
       ))}
 
-      {/* Confetti */}
       {confetti.map((c, i) => (
         <div
           key={i}
@@ -73,18 +99,35 @@ export default function HomePage() {
           I made something special for you Chloo ✨ Pappoma? 💕
         </p>
 
-        <BirthdayCake />
+        <BirthdayCake onAllBlown={() => setAllCandlesBlown(true)} />
 
-        <button className="enter-btn" onClick={() => setShowPage("memories")}>
-          💖 Enter 💖
+        <button 
+          className={`enter-btn ${allCandlesBlown ? 'pulse-glow' : ''}`} 
+          onClick={() => setShowPage("memories")}
+          disabled={!allCandlesBlown}
+        >
+          {allCandlesBlown ? '💖 Enter Your Gift 💖' : '🕯️ Blow All Candles First 🕯️'}
         </button>
+        
+        {allCandlesBlown && (
+          <p className="unlock-msg">✨ You unlocked the gift! Click to enter ✨</p>
+        )}
       </div>
     </div>
   );
 }
 
-function BirthdayCake() {
+function BirthdayCake({ onAllBlown }) {
   const [flames, setFlames] = useState([true, true, true, true, true]);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  useEffect(() => {
+    if (flames.every(f => !f) && !showCelebration) {
+      setShowCelebration(true);
+      onAllBlown();
+      setTimeout(() => setShowCelebration(false), 3000);
+    }
+  }, [flames, showCelebration, onAllBlown]);
 
   const toggleFlame = (index) => {
     setFlames((prev) => {
@@ -95,7 +138,19 @@ function BirthdayCake() {
   };
 
   return (
-    <div style={{ marginTop: "80px" }}>
+    <div style={{ marginTop: "80px", position: "relative" }}>
+      {showCelebration && (
+        <div className="cake-celebration">
+          <div className="celebration-text">🎉 Yay! All candles blown! 🎉</div>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="mini-confetti" style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 0.5}s`,
+              background: ['#ff69b4', '#ffd700', '#ff1493', '#00ff00'][Math.floor(Math.random() * 4)]
+            }} />
+          ))}
+        </div>
+      )}
       <div style={{ position: "relative", display: "inline-block" }}>
         {[200, 220, 240].map((w, i) => (
           <div
@@ -127,20 +182,19 @@ function BirthdayCake() {
               cursor: "pointer",
             }}
             onClick={() => toggleFlame(i)}
+            title="Click to blow out candle"
           >
             {flames[i] && <div className="candle-flame" />}
           </div>
         ))}
       </div>
-      <p
-        style={{
-          marginTop: "16px",
-          fontSize: "1.3rem",
-          color: "#191717ff",
-          textShadow: "0 4px 10px rgba(0,0,0,0.3)",
-        }}
-      >
-        🎂 Happy Birthday da Ahavali 🎂
+      <p style={{
+        marginTop: "16px",
+        fontSize: "1.3rem",
+        color: "#191717ff",
+        textShadow: "0 4px 10px rgba(0,0,0,0.3)",
+      }}>
+        🎂 {flames.every(f => !f) ? 'Wish granted! 🌟' : 'Make a wish & blow the candles! 🕯️'}
       </p>
     </div>
   );

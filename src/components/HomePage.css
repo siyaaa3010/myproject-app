@@ -50,8 +50,22 @@ body, html, #root { height: 100%; margin: 0; font-family: 'Poppins', sans-serif;
   transition: all .3s ease;
   position: relative;
   overflow: hidden;
+  font-weight: 700;
 }
-.enter-btn:hover {
+.enter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #ccc;
+  color: #666;
+}
+.enter-btn.pulse-glow {
+  animation: pulseGlow 1.5s ease infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 10px 24px rgba(255,78,80,0.4); }
+  50% { box-shadow: 0 10px 40px rgba(255,78,80,0.8), 0 0 30px rgba(255,78,80,0.6); }
+}
+.enter-btn:hover:not(:disabled) {
   transform: scale(1.15) rotate(-3deg);
   background: #ff4e50; 
   color: white;
@@ -123,6 +137,85 @@ body, html, #root { height: 100%; margin: 0; font-family: 'Poppins', sans-serif;
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Welcome Splash */
+.welcome-splash {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeOut 3s ease forwards;
+}
+.splash-text {
+  font-size: 3.5rem;
+  color: white;
+  margin: 0;
+  animation: zoomIn 1s ease;
+}
+.splash-sub {
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.9);
+  margin-top: 20px;
+  animation: fadeIn 2s ease;
+}
+@keyframes fadeOut {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+@keyframes zoomIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Cake Celebration */
+.cake-celebration {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 200px;
+  pointer-events: none;
+  z-index: 10;
+}
+.celebration-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ff1493;
+  text-align: center;
+  animation: bounce 1s ease infinite;
+}
+.mini-confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: miniConfettiFall 2s ease-out forwards;
+}
+@keyframes miniConfettiFall {
+  to { transform: translateY(200px) rotate(720deg); opacity: 0; }
+}
+
+/* Unlock Message */
+.unlock-msg {
+  margin-top: 20px;
+  font-size: 1.2rem;
+  color: #ff1493;
+  font-weight: 600;
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 /* ---------------- Responsive ---------------- */

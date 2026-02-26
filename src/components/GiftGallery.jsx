@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import "./GiftGallery.css";
 
 const PHOTOS = [
@@ -52,9 +52,49 @@ export default function GiftGallery({ onBack, onNext }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [openedIndex, setOpenedIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('giftFavorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [openedGifts, setOpenedGifts] = useState(() => {
+    const saved = localStorage.getItem('openedGifts');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [isSlideshow, setIsSlideshow] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showLoveMessage, setShowLoveMessage] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [filter, setFilter] = useState('all');
+  const [showFireworks, setShowFireworks] = useState(false);
   const audioRef = useRef(null);
+  const slideshowRef = useRef(null);
+
+  const allUnlocked = openedGifts.length === PHOTOS.length;
 
   const toggle = (i) => {
+    const isFirstGift = openedGifts.length === 0;
+    const willBeComplete = openedGifts.length === PHOTOS.length - 1 && !openedGifts.includes(i);
+    
+    if (!openedGifts.includes(i)) {
+      const newOpened = [...openedGifts, i];
+      setOpenedGifts(newOpened);
+      localStorage.setItem('openedGifts', JSON.stringify(newOpened));
+      
+      if (isFirstGift) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
+      }
+      
+      if (willBeComplete) {
+        setTimeout(() => {
+          setShowFireworks(true);
+          setShowLoveMessage(true);
+          setTimeout(() => setShowFireworks(false), 6000);
+        }, 500);
+      }
+    }
+    
     setOpenedIndex(i);
     setActiveIndex(i);
 
@@ -64,6 +104,106 @@ export default function GiftGallery({ onBack, onNext }) {
       setIsPlaying(true);
     }
   };
+
+  const toggleFavorite = (i) => {
+    const newFavs = favorites.includes(i) 
+      ? favorites.filter(f => f !== i)
+      : [...favorites, i];
+    setFavorites(newFavs);
+    localStorage.setItem('giftFavorites', JSON.stringify(newFavs));
+  };
+
+  const goNext = useCallback(() => {
+    if (activeIndex !== null) {
+      const next = (activeIndex + 1) % PHOTOS.length;
+      setActiveIndex(next);
+      setIsZoomed(false);
+    }
+  }, [activeIndex]);
+
+  const goPrev = useCallback(() => {
+    if (activeIndex !== null) {
+      const prev = (activeIndex - 1 + PHOTOS.length) % PHOTOS.length;
+      setActiveIndex(prev);
+      setIsZoomed(false);
+    }
+  }, [activeIndex]);
+
+  const closeLightbox = () => {
+    setActiveIndex(null);
+    setIsZoomed(false);
+    setIsSlideshow(false);
+  };
+
+  const downloadImage = () => {
+    if (activeIndex === null) return;
+    const link = document.createElement('a');
+    link.href = PHOTOS[activeIndex].url;
+    link.download = `memory-${activeIndex + 1}.jpg`;
+    link.click();
+  };
+
+  const toggleSlideshow = () => {
+    setIsSlideshow(!isSlideshow);
+  };
+
+  const getRandomMemory = () => {
+    const opened = openedGifts.filter(i => i >= 0);
+    if (opened.length === 0) return;
+    const random = opened[Math.floor(Math.random() * opened.length)];
+    setActiveIndex(random);
+  };
+
+  const getFilteredPhotos = () => {
+    if (filter === 'favorites') return PHOTOS.map((p, i) => ({ ...p, index: i })).filter((_, i) => favorites.includes(i));
+    if (filter === 'opened') return PHOTOS.map((p, i) => ({ ...p, index: i })).filter((_, i) => openedGifts.includes(i));
+    return PHOTOS.map((p, i) => ({ ...p, index: i }));
+  };
+
+  useEffect(() => {
+    if (isSlideshow && activeIndex !== null) {
+      slideshowRef.current = setInterval(goNext, 3000);
+    } else {
+      if (slideshowRef.current) clearInterval(slideshowRef.current);
+    }
+    return () => {
+      if (slideshowRef.current) clearInterval(slideshowRef.current);
+    };
+  }, [isSlideshow, activeIndex, goNext]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (activeIndex === null) return;
+      if (e.key === 'ArrowRight') goNext();
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'Escape') closeLightbox();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeIndex, goNext, goPrev]);
+
+  useEffect(() => {
+    let touchStartX = 0;
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    const handleTouchEnd = (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) goNext();
+        else goPrev();
+      }
+    };
+    if (activeIndex !== null) {
+      window.addEventListener('touchstart', handleTouchStart);
+      window.addEventListener('touchend', handleTouchEnd);
+    }
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [activeIndex, goNext, goPrev]);
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
@@ -94,37 +234,135 @@ export default function GiftGallery({ onBack, onNext }) {
         ))}
       </div>
 
+      {showConfetti && (
+        <div className="confetti-container">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div key={i} className="confetti" style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 0.5}s`,
+              background: ['#ff69b4', '#ff1493', '#ffc0cb', '#ff6b9d'][Math.floor(Math.random() * 4)]
+            }} />
+          ))}
+        </div>
+      )}
+
+      {showFireworks && (
+        <div className="fireworks-container">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <div key={i} className="firework" style={{
+              left: `${20 + Math.random() * 60}%`,
+              top: `${20 + Math.random() * 60}%`,
+              animationDelay: `${Math.random() * 2}s`
+            }}>
+              {Array.from({ length: 12 }).map((_, j) => (
+                <div key={j} className="spark" style={{
+                  transform: `rotate(${j * 30}deg)`
+                }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showLoveMessage && (
+        <div className="love-message-overlay" onClick={() => setShowLoveMessage(false)}>
+          <div className="love-message-card" onClick={(e) => e.stopPropagation()}>
+            <h2>🎉 All Memories Unlocked! 🎉</h2>
+            <p>You've opened all precious moments we've shared together!</p>
+            <p className="love-quote">"Every moment with you is a memory I treasure forever" 💕</p>
+            <p>Thank you for being the best forever!</p>
+            <p className="signature">- Your's Thalavalii❤️</p>
+            <button className="close-message-btn" onClick={() => setShowLoveMessage(false)}>Close 💖</button>
+          </div>
+        </div>
+      )}
+
       <header className="gift-header">
         <h1 className="gift-title">💖 Tap a Memory to Reveal Chloo 😘💙🤍 </h1>
-        <p className="gift-sub">✨</p>
+        <p className="gift-sub">
+          ✨ {openedGifts.length} of {PHOTOS.length} memories unlocked • {favorites.length} favorites ❤️
+          {allUnlocked && <span className="complete-badge"> 🏆 COMPLETE!</span>}
+        </p>
         <div className="gift-header-buttons">
           {onBack && <button className="back-btn" onClick={onBack}>← Back</button>}
           {onNext && <button className="back-btn" onClick={onNext}>Next ➡</button>}
           <button className="music-btn" onClick={toggleMusic}>
-            {isPlaying ? "⏸ Pause Music" : "▶ Play Music"}
+            {isPlaying ? "⏸ Pause" : "▶ Play"}
           </button>
+          {openedGifts.length > 0 && (
+            <button className="random-btn" onClick={getRandomMemory}>🎲 Random</button>
+          )}
+        </div>
+        <div className="filter-buttons">
+          <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({PHOTOS.length})</button>
+          <button className={`filter-btn ${filter === 'opened' ? 'active' : ''}`} onClick={() => setFilter('opened')}>Opened ({openedGifts.length})</button>
+          <button className={`filter-btn ${filter === 'favorites' ? 'active' : ''}`} onClick={() => setFilter('favorites')}>Favorites ({favorites.length})</button>
         </div>
       </header>
 
       <section className="gallery-grid">
-        {PHOTOS.map((p, i) => (
+        {getFilteredPhotos().map((p) => {
+          const i = p.index;
+          return (
           <div
             key={i}
-            className={`gift-box ${openedIndex === i ? "opened" : ""}`}
+            className={`gift-box ${openedGifts.includes(i) ? "opened" : ""}`}
             onClick={() => toggle(i)}
           >
-            <div className="gift-lid" />
+            <div className="gift-lid">
+              <span className="gift-number">{i + 1}</span>
+            </div>
             <div
               className="gallery-thumb"
-              style={{ backgroundImage: openedIndex === i ? `url(${p.url})` : "none" }}
-            />
+              style={{ backgroundImage: openedGifts.includes(i) ? `url(${p.url})` : "none" }}
+            >
+              {openedGifts.includes(i) && (
+                <button 
+                  className={`fav-btn ${favorites.includes(i) ? 'active' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(i); }}
+                >
+                  {favorites.includes(i) ? '❤️' : '🤍'}
+                </button>
+              )}
+            </div>
           </div>
-        ))}
+        );})}
       </section>
 
+      {openedGifts.length === 0 && (
+        <div className="welcome-hint">
+          <p>👆 Click any gift box to start your journey through our memories! 💝</p>
+        </div>
+      )}
+
       {activeIndex !== null && (
-        <div className="lightbox" onClick={() => setActiveIndex(null)}>
-          <img src={PHOTOS[activeIndex].url} alt="" className="lightbox-img" />
+        <div className="lightbox" onClick={closeLightbox}>
+          <div className="lightbox-controls" onClick={(e) => e.stopPropagation()}>
+            <button className="lb-btn" onClick={closeLightbox} title="Close">✕</button>
+            <button className="lb-btn" onClick={downloadImage} title="Download">⬇</button>
+            <button className="lb-btn" onClick={toggleSlideshow} title="Slideshow">
+              {isSlideshow ? '⏸' : '▶'}
+            </button>
+            <button 
+              className={`lb-btn ${favorites.includes(activeIndex) ? 'active' : ''}`}
+              onClick={() => toggleFavorite(activeIndex)}
+              title="Favorite"
+            >
+              {favorites.includes(activeIndex) ? '❤️' : '🤍'}
+            </button>
+            <button className="lb-btn" onClick={getRandomMemory} title="Random Memory">🎲</button>
+            <span className="photo-counter">{activeIndex + 1} / {PHOTOS.length}</span>
+          </div>
+          
+          <button className="nav-btn prev" onClick={(e) => { e.stopPropagation(); goPrev(); }}>‹</button>
+          <button className="nav-btn next" onClick={(e) => { e.stopPropagation(); goNext(); }}>›</button>
+          
+          <img 
+            src={PHOTOS[activeIndex].url} 
+            alt="" 
+            className={`lightbox-img ${isZoomed ? 'zoomed' : ''}`}
+            onClick={(e) => { e.stopPropagation(); setIsZoomed(!isZoomed); }}
+          />
           <p className="lightbox-caption">{PHOTOS[activeIndex].caption}</p>
         </div>
       )}

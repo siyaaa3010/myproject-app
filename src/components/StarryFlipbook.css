@@ -12,16 +12,73 @@
 
 /* Top Bar */
 .sky-topbar {
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 16px 12px; position: relative; z-index: 2;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .sky-back {
-  position: absolute; left: 12px; top: 12px;
   background: rgba(255,255,255,0.1); color:#fff; border: 1px solid rgba(255,255,255,0.2);
   padding: 8px 12px; border-radius: 10px; cursor: pointer;
   backdrop-filter: blur(4px);
+  transition: transform 0.2s;
 }
-.sky-title { margin: 0; font-weight: 700; letter-spacing: .5px; }
+.sky-back:hover { transform: scale(1.05); }
+.sky-title { margin: 0; font-weight: 700; letter-spacing: .5px; flex: 1; text-align: center; }
+
+.sky-music-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.sky-play-btn {
+  background: rgba(255,255,255,0.9);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.sky-play-btn:hover { transform: scale(1.1); }
+
+.sky-vol-slider {
+  width: 80px;
+}
+
+.sky-song-name {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sky-next-btn {
+  background: linear-gradient(45deg, #ff5d8f, #ff8fa3);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.sky-next-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255,93,143,0.4);
+}
 
 /* Star field */
 .sky {
@@ -34,6 +91,15 @@
   box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(255,255,255,0.4);
   animation: twinkle ease-in-out infinite;
   border: none; padding: 0; cursor: pointer;
+  transition: all 0.3s ease;
+}
+.star.visited {
+  background: radial-gradient(circle, #ffd700, rgba(255,215,0,0.3));
+  box-shadow: 0 0 12px rgba(255,215,0,0.9), 0 0 20px rgba(255,215,0,0.5);
+}
+.star:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 20px rgba(255,255,255,1), 0 0 30px rgba(255,255,255,0.6);
 }
 .star:focus { outline: 2px solid rgba(255,255,255,0.6); outline-offset: 2px; }
 @keyframes twinkle {
@@ -65,6 +131,27 @@
   font-size: .95rem; opacity: .85; letter-spacing: .3px;
   background: rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.15);
+  animation: pulse 2s ease infinite;
+}
+
+/* Stats Bar */
+.sky-stats {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  background: rgba(255,255,255,0.1);
+  padding: 10px 20px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  z-index: 3;
+}
+.sky-stats span {
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 /* Flipbook modal */
@@ -146,13 +233,39 @@
   width: 38px; height: 38px; border-radius: 999px; border: none; cursor: pointer;
   background: rgba(255,255,255,0.9); color: #111; font-weight: 700; font-size: 18px;
   box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+  transition: transform 0.2s;
 }
+.close-btn:hover { transform: scale(1.1); }
+
+.fav-book-btn {
+  position: absolute; top: 10px; right: 60px;
+  width: 38px; height: 38px; border-radius: 999px; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.9); font-size: 18px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+  transition: transform 0.2s;
+}
+.fav-book-btn:hover { transform: scale(1.1); }
+.fav-book-btn.active { background: rgba(255,105,180,0.9); }
+
+.page-counter {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.9);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 .nav-btn {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 44px; height: 44px; border-radius: 999px; border: none; cursor: pointer;
   background: rgba(255,255,255,0.95); color: #111; font-size: 24px; font-weight: 800;
   box-shadow: 0 14px 34px rgba(0,0,0,0.35);
+  transition: transform 0.2s;
 }
+.nav-btn:hover { transform: translateY(-50%) scale(1.1); }
 .nav-btn.left { left: -18px; }
 .nav-btn.right { right: -18px; }
 
@@ -162,4 +275,67 @@
   .page-text { padding: 16px; }
   .nav-btn.left { left: 6px; }
   .nav-btn.right { right: 6px; }
+  .sky-topbar { flex-direction: column; align-items: stretch; }
+  .sky-title { text-align: center; font-size: 0.9rem; }
+  .sky-music-player { justify-content: center; }
+  .sky-song-name { font-size: 0.85rem; }
+}
+
+/* Completion Overlay */
+.completion-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.5s ease;
+}
+
+.completion-card {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 40px;
+  border-radius: 30px;
+  text-align: center;
+  color: white;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(102,126,234,0.5);
+  animation: zoomIn 0.6s ease;
+}
+
+.completion-card h2 {
+  font-size: 2rem;
+  margin: 0 0 20px;
+  animation: pulse 2s infinite;
+}
+
+.completion-card p {
+  font-size: 1.1rem;
+  margin: 15px 0;
+}
+
+.completion-quote {
+  font-style: italic;
+  font-size: 1.3rem !important;
+  margin: 25px 0 !important;
+  padding: 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 15px;
+  font-weight: 600;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
