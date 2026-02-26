@@ -20,6 +20,8 @@ export default function HomePage() {
       localStorage.removeItem('viewedPhotos');
       localStorage.removeItem('memoriesFavorites');
       localStorage.removeItem('celebrationShown');
+      localStorage.removeItem('giftFavorites');
+      localStorage.removeItem('openedGifts');
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);

@@ -50,7 +50,6 @@ const PHOTOS = [
 
 export default function GiftGallery({ onBack, onNext }) {
   const [activeIndex, setActiveIndex] = useState(null);
-  const [openedIndex, setOpenedIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('giftFavorites');
@@ -64,7 +63,6 @@ export default function GiftGallery({ onBack, onNext }) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showLoveMessage, setShowLoveMessage] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
   const [filter, setFilter] = useState('all');
   const [showFireworks, setShowFireworks] = useState(false);
   const audioRef = useRef(null);
@@ -95,7 +93,6 @@ export default function GiftGallery({ onBack, onNext }) {
       }
     }
     
-    setOpenedIndex(i);
     setActiveIndex(i);
 
     if (audioRef.current && !isPlaying) {
